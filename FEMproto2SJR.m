@@ -71,11 +71,15 @@ yNodalCoords = NodalCoords(:,2);
 DOF=NumOfNodes*2; %for 2 degrees of freedom per node               MAYBE ISSUE!!
 
 %assembly routine that assembles the global stiffness matrix using the information from the element interconnectivity information matrix
+
 Stiff = Stiff(DOF,xNodalCoords,yNodalCoords,NumberOfElements,ConnectingNodes,E,A,L);
+fprintf('\n Global Stiffness Martix is:\n');
+disp(Stiff)
+
 StiffTotal=Stiff ;%Assign the complete stiffness matrix to a varible for later use in Post Processing
 %Reduce the equations                                       CHECK ON THIS
 Reduce1 = BC(:,1)==1; %finds 1s in BC (boudary conditions)
-disp("HERE")
+%disp("HERE") %for debugging lol
 Stiff(:,Reduce1)=[]; % column deletion
 Stiff(Reduce1,:)=[]; %row  deletion
 GlobalForce(Reduce1,:)=[] ;%row deletion for global force vector           
@@ -134,14 +138,14 @@ for i = 1:length(BC)
     end
 end
 DispRes = reshape(Displacements,2,[]); %resapes Displacements to nx2 
-DispRes = DispRes.' %reshaped displacement matrix
+DispRes = DispRes.' ;%reshaped displacement matrix
 %DispRes = reshape(Displacements,2,[]); %resapes Displacements to nx2 
 %DispRes = DispRes.'
 DispResProto=DispRes; %Saves DispRes to be used later
 DispRes = DispRes*ScaleFactor;% Multiplies scalefactor by displacements to make them more pronounced
 
 DeformedCoords = DispRes + NodalCoords; %add the deformation to the original coordinates
-DeformedCoordsNOsf = DispResProto + NodalCoords %add the deformation to the original coordinates
+DeformedCoordsNOsf = DispResProto + NodalCoords; %add the deformation to the original coordinates
 
 
 %Deformed
@@ -154,10 +158,7 @@ for n = 1:NumberOfElements
 
     %STRESS LOL
     ModE = E(n); %mod of elasticity for each element
-    l=xNodalCoords(ConnectingNodes(2))-xNodalCoords(ConnectingNodes(1)); %dist btw x coords
-    h=yNodalCoords(ConnectingNodes(2))-yNodalCoords(ConnectingNodes(1)); %dist btw y coords
-    %Len=sqrt(l.^2+h.^2) %Length of each element
-    Len=L(n) %Length of each element
+    Len=L(n); %Length of each element
     xDeformedNOsf = [DeformedCoordsNOsf(ConnectingNodes(n,1),1) DeformedCoordsNOsf(ConnectingNodes(n,2),1)]; %deformed coords with no scale factor
     yDeformedNOsf = [DeformedCoordsNOsf(ConnectingNodes(n,1),2) DeformedCoordsNOsf(ConnectingNodes(n,2),2)]; %deformed coords with no scale factor
     ldeformed= xDeformedNOsf(ConnectingNodes(2))-xDeformedNOsf(ConnectingNodes(1)); %dist btw x coords      %%%%%%%%%%%%%%%%%%%%
