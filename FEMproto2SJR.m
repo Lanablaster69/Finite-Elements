@@ -36,18 +36,22 @@ clear all
 clc
 %% Input Section
 
-%warning=input('Make sure elements are entered in the same order each time you enter a value for elements, ie 1, 2, 3. Press any key to continue');
+%warning=input('Make sure elements/nodes are entered in the same order each time you enter a value for elements or nodes, ie 1, 2, 3. Press any key to continue');
+disp('Make sure elements/nodes are entered in the same order each time you enter a value for elements or nodes, ie 1, 2, 3. Press Enter to continue');
+input('');
 
 %Create a matrix that stores the nodal coordinates
 NodalCoords =[0 0;1 0;2 0;3 0;2 0.5;1 1;0 1.5];% input("Enter all nodal coordinates (meters) in the format: [x1 y1; x2 y2; ...]");
+%NodalCoords =[0 0;1 0;2 0;3 0;2 0.25;1 0.5;0 0.75];% input("Enter all nodal coordinates (meters) in the format: [x1 y1; x2 y2; ...]");
 NumOfNodes = 7;%input("Enter the Total Number of Nodes in the Structure");
 ConnectingNodes =[1 2;2 3;3 4;4 5;5 6;6 7;1 6;2 6;2 5;3 5] ;%input("Enter the pairs of nodes connected by elements in the format: [1 2;1 3;2 3;...] where 1, 2, 3 are nodes");
 
 %Create individual vectors for each of the parameters E(e), A(e), L(e), and θ(e)0
-E =[210e9;210e9;210e9;210e9;210e9;210e9;210e9;210e9;210e9;210e9];% input('Enter modulus of elasticity (Pascals) for each element in element order (ie. 1,2,3) in the format: [210e9; 210e9; 69e9; 210e9;...]');
-A =[0.003;0.003;0.003;0.003;0.003;0.003;0.003;0.003;0.003;0.003];% input('Enter the cross-sectional area (m^2) for each element in element order (ie. 1,2,3) in the format: [0.003; 0.15; 0.003;...]');
+E =[69e9;69e9;69e9;69e9;69e9;210e9;69e9;69e9;69e9;210e9];% input('Enter modulus of elasticity (Pascals) for each element in element order (ie. 1,2,3) in the format: [210e9; 210e9; 69e9; 210e9;...]');
+%E =[210e9;210e9;210e9;210e9;210e9;210e9;210e9;210e9;210e9;210e9];% input('Enter modulus of elasticity (Pascals) for each element in element order (ie. 1,2,3) in the format: [210e9; 210e9; 69e9; 210e9;...]');
+A =[0.0001;0.00007;0.00008;0.00006;0.0001;0.000045;0.000025;0.00005;0.00003;0.00005];% input('Enter the cross-sectional area (m^2) for each element in element order (ie. 1,2,3) in the format: [0.003; 0.15; 0.003;...]');
 L =[1;1;1;1.118;1.118;1.118;1.414;1;1.118;0.5];% input('Enter the length (m) of each element in element order (ie. 1,2,3) in the format: [1; 1.25; 0.8;...]');
-theta = [0;0;0;135;135;135;45;90;45;90];%input('Enter the angle (degrees) of each element in element order (ie. 1,2,3) in the format: [0; 45; -30;...]');
+%theta = [0;0;0;135;135;135;45;90;45;90];%input('Enter the angle (degrees) of each element in element order (ie. 1,2,3) in the format: [0; 45; -30;...]');
 
 %Create the Boundary Condition Vector
 BC =[1;1;0;0;0;0;0;0;0;0;0;0;1;1];% input("Enter a vector where each node that is constrained is a 1 and each unconstraied node is a 0 in the format: [1;0;0;1;0;1;1;...]"); %must be entered in order
@@ -89,26 +93,16 @@ Displacements = Stiff\GlobalForce;%inv(Stiff)*GlobalForce;
 fprintf('\nDisplacement vector is:\n');
 disp(Displacements);
 %% Post-Processing Section   
-
-
-
 %Solve for the reaction forces
 % [Kr]*{dip}={react}
 %Leave rows corresponding to reactions & Columns corresponding to displacements
-
-
 SFR1 = BC(:,1) == 1; %finds 1s in BC (boudary conditions)
 SFR2 = BC(:,1) == 0; %finds 0s in BC (boudary conditions)
 StiffTotal(:,SFR1)=[];
 StiffTotal(SFR2,:)=[];
 
-fprintf('\n Reaction Force vector is:\n');
+fprintf('\n Reaction Force vector [N] is:\n');
 StiffTotal*Displacements
-
-
-
-
-
 
 %Plot the undeformed and deformed (with a scale factor) shapes of the structure
 
@@ -122,13 +116,6 @@ for n = 1:NumberOfElements
    hold on
 end
 
-
-% Inserts a row of zero to Displacements if BC=1
-%for i = 1:length(BC)
-%    if BC(i) == 1
-%        Displacements = [Displacements(1:i-1,:); zeros(1,size(Displacements,2)); Displacements(i:end,:)];
-%    end
-%end
 
 % Inserts a row of zero to Displacements if BC=1
 %Displacements
@@ -148,8 +135,6 @@ DeformedCoords = DispRes + NodalCoords; %add the deformation to the original coo
 DeformedCoordsNOsf = DispResProto + NodalCoords; %add the deformation to the original coordinates
 
 
-%Deformed
-
 for n = 1:NumberOfElements
     xDeformed = [DeformedCoords(ConnectingNodes(n,1),1) DeformedCoords(ConnectingNodes(n,2),1)];
     yDeformed = [DeformedCoords(ConnectingNodes(n,1),2) DeformedCoords(ConnectingNodes(n,2),2)];
@@ -161,33 +146,24 @@ for n = 1:NumberOfElements
     Len=L(n); %Length of each element
     xDeformedNOsf = [DeformedCoordsNOsf(ConnectingNodes(n,1),1) DeformedCoordsNOsf(ConnectingNodes(n,2),1)]; %deformed coords with no scale factor
     yDeformedNOsf = [DeformedCoordsNOsf(ConnectingNodes(n,1),2) DeformedCoordsNOsf(ConnectingNodes(n,2),2)]; %deformed coords with no scale factor
-    ldeformed= xDeformedNOsf(ConnectingNodes(2))-xDeformedNOsf(ConnectingNodes(1)); %dist btw x coords      %%%%%%%%%%%%%%%%%%%%
-    hdeformed=yDeformedNOsf(ConnectingNodes(2))-yDeformedNOsf(ConnectingNodes(1)); %dist btw y coords             %%%%%%%%%%%%%%
+    ldeformed= xDeformedNOsf(ConnectingNodes(2))-xDeformedNOsf(ConnectingNodes(1)); %dist btw x coords      
+    hdeformed=yDeformedNOsf(ConnectingNodes(2))-yDeformedNOsf(ConnectingNodes(1)); %dist btw y coords        
     DefLen =sqrt(ldeformed.^2+hdeformed.^2);
     DeltaL =abs(Len-DefLen);
     Strain = DeltaL/Len;
    
     stress(n) = ModE * Strain;
 end
-stress
+fprintf('\n Stress in Each Element[MPa] is:\n');
+stress./10e5
 title('Deformed vs unDeformed Truss Structure')
-%legend(unDeformed,Deformed)
 
-%Calculate the stress in each element
-%stress= ModElast*Strain
-
-
-%for n = 1:NumberOfElements
-   % ModE = E(n);
-    %Len = L(n);
-    %l=xNodalCoords(CN(2))-xNodalCoords(CN(1)); %dist btw x coords
-   % h=yNodalCoords(CN(2))-yNodalCoords(CN(1)); %dist btw y coords
-    %Len=sqrt(l.^2+h.^2);
-    %ldeformed=
-
-    %Strain = DeltaL/Len;
-   
-    %stress(n) = ModE * Strain
-%end
-%stress
-%stress.'
+%% Mass Efficiency
+V=L.*A
+Density = zeros(size(E));
+% Assign values based on E vector
+Density(E == 69e9) = 2700;
+Density(E == 210e9) = 7850;
+Eff=9000/sum(V.*Density);
+fprintf('\n Mass Efficiency of the Truss is:\n');
+disp(Eff)
